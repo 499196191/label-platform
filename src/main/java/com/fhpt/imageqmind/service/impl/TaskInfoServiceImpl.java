@@ -1,25 +1,18 @@
 package com.fhpt.imageqmind.service.impl;
 
 import com.fhpt.imageqmind.constant.TaskStatus;
-
 import com.fhpt.imageqmind.domain.DataSetEntity;
-
-
 import com.fhpt.imageqmind.domain.TagLabelEntity;
 import com.fhpt.imageqmind.domain.TaskInfoEntity;
-
-
-
 import com.fhpt.imageqmind.domain.TaskTypeEntity;
 import com.fhpt.imageqmind.objects.PageInfo;
-
 import com.fhpt.imageqmind.objects.vo.AddTaskVo;
 import com.fhpt.imageqmind.objects.vo.TagLabelVo;
 import com.fhpt.imageqmind.objects.vo.TaskInfoVo;
-
 import com.fhpt.imageqmind.objects.vo.TaskTypeVo;
-import com.fhpt.imageqmind.repository.TaskInfoRepository;
 
+import com.fhpt.imageqmind.repository.DataSetRepository;
+import com.fhpt.imageqmind.repository.TaskInfoRepository;
 import com.fhpt.imageqmind.repository.TaskTypeRepository;
 import com.fhpt.imageqmind.service.TaskInfoService;
 import org.springframework.beans.BeanUtils;
@@ -27,14 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-
-
-
 import javax.transaction.Transactional;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
-
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +40,8 @@ public class TaskInfoServiceImpl implements TaskInfoService {
     private TaskInfoRepository taskInfoRepository;
     @Autowired
     private TaskTypeRepository taskTypeRepository;
+    @Autowired
+    private DataSetRepository dataSetRepository;
 
     @Override
     public TaskInfoVo detail(Long taskId) {
@@ -121,11 +112,24 @@ public class TaskInfoServiceImpl implements TaskInfoService {
         List<DataSetEntity> dataSetEntities = new ArrayList<>();
         List<TagLabelEntity> tagLabelEntities = new ArrayList<>();
         //只需传递id至临时实体，将自动保存映射map关系
-        addTaskVo.getDataSetIds().forEach(dataSetId -> {
-            DataSetEntity dataSetEntity = new DataSetEntity();
-            dataSetEntity.setId(dataSetId);
-            dataSetEntities.add(dataSetEntity);
-        });
+        DataSetEntity dataSetEntity = new DataSetEntity();
+        dataSetEntity.setId(addTaskVo.getDataSetId());
+        Optional<DataSetEntity> dataSetEntityOptional = dataSetRepository.findById(addTaskVo.getDataSetId());
+        if (!dataSetEntityOptional.isPresent()) {
+            return null;
+        }
+        //初始化任务大小
+        taskInfoEntity.setSize(dataSetEntityOptional.get().getSize());
+        //初始进度为0.00
+        taskInfoEntity.setProcess(new BigDecimal(0));
+        //初始标注行id
+        taskInfoEntity.setCurrentRowId(dataSetEntityOptional.get().getDataRowEntities().get(0).getId());
+        dataSetEntities.add(dataSetEntity);
+//        addTaskVo.getDataSetIds().forEach(dataSetId -> {
+//            DataSetEntity dataSetEntity = new DataSetEntity();
+//            dataSetEntity.setId(dataSetId);
+//            dataSetEntities.add(dataSetEntity);
+//        });
         addTaskVo.getTagIds().forEach(tagId -> {
             TagLabelEntity tagLabelEntity = new TagLabelEntity();
             tagLabelEntity.setId(tagId);

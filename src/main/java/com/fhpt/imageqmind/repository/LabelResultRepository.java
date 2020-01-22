@@ -15,5 +15,6 @@ public interface LabelResultRepository extends JpaRepository<LabelResultEntity, 
     @Query("select l from LabelResultEntity l where l.dataRow.id = :dataRowId and l.taskInfo.id = :taskId")
     List<LabelResultEntity> query(@Param("dataRowId") long dataRowId, @Param("taskId") long taskId);
 
-
+    @Query("select count(l.id) from LabelResultEntity l where l.taskInfo.id = :taskId group by l.dataRow.id")
+    long getFinishedRowCount(@Param("taskId") long taskId);
 }

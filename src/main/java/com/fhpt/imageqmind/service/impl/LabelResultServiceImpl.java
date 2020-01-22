@@ -1,5 +1,7 @@
 package com.fhpt.imageqmind.service.impl;
 
+import com.fhpt.imageqmind.constant.TaskStatus;
+
 import com.fhpt.imageqmind.domain.DataRowEntity;
 import com.fhpt.imageqmind.domain.LabelResultEntity;
 import com.fhpt.imageqmind.domain.TagLabelEntity;
@@ -16,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -57,6 +61,9 @@ public class LabelResultServiceImpl implements LabelResultService {
     @Transactional(rollbackOn = Exception.class)
     public List<LabelResultVo> insert(List<LabelIndexVo> labelIndexVos) {
         List<LabelResultEntity> list = new ArrayList<>();
+        Optional<TaskInfoEntity> taskInfoOptional = taskInfoRepository.findById(labelIndexVos.get(0).getTaskId());
+        Assert.isTrue(taskInfoOptional.isPresent(), "taskId信息为空！");
+        TaskInfoEntity taskInfoEntity = taskInfoOptional.get();
         labelIndexVos.forEach(labelIndexVo -> {
             LabelResultEntity labelResult = new LabelResultEntity();
             labelResult.setStart(labelIndexVo.getStart());
@@ -64,9 +71,7 @@ public class LabelResultServiceImpl implements LabelResultService {
             Optional<DataRowEntity> dataRowOptional = dataRowRepository.findById(labelIndexVo.getDataRowId());
             Assert.isTrue(dataRowOptional.isPresent(), "dataRowId信息为空！");
             labelResult.setDataRow(dataRowOptional.get());
-            Optional<TaskInfoEntity> taskInfoOptional = taskInfoRepository.findById(labelIndexVo.getTaskId());
-            Assert.isTrue(taskInfoOptional.isPresent(), "taskId信息为空！");
-            labelResult.setTaskInfo(taskInfoOptional.get());
+            labelResult.setTaskInfo(taskInfoEntity);
             Optional<TagLabelEntity> tagLabelOptional = tagLabelRepository.findById(labelIndexVo.getTagId());
             Assert.isTrue(tagLabelOptional.isPresent(), "tagId信息为空！");
             labelResult.setTagLabel(tagLabelOptional.get());
@@ -76,6 +81,18 @@ public class LabelResultServiceImpl implements LabelResultService {
             list.add(labelResult);
         });
         List<LabelResultEntity> savedList = labelResultRepository.saveAll(list);
+        //更新任务的当前标注行信息,进度信息
+        taskInfoEntity.setCurrentRowId(labelIndexVos.get(0).getDataRowId());
+        long finishedRowCount = labelResultRepository.getFinishedRowCount(taskInfoEntity.getId());
+        BigDecimal finishedDecimal = new BigDecimal(finishedRowCount);
+        BigDecimal sizeDecimal = new BigDecimal(taskInfoEntity.getSize());
+        if(finishedRowCount==taskInfoEntity.getSize()){
+            taskInfoEntity.setStatus(TaskStatus.FINISHED.getType());
+        }else{
+            taskInfoEntity.setStatus(TaskStatus.STARTING.getType());
+        }
+        taskInfoEntity.setProcess(finishedDecimal.divide(sizeDecimal, 4, BigDecimal.ROUND_HALF_UP));
+        taskInfoRepository.save(taskInfoEntity);
         List<LabelResultVo> resultVos = new ArrayList<>();
         convertLabelResultInfo(savedList, resultVos);
         return resultVos;

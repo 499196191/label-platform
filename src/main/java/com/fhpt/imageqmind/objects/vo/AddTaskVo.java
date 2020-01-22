@@ -18,6 +18,6 @@ public class AddTaskVo {
     private Long taskType;
     @ApiModelProperty(value = "标签Ids")
     private List<Long> tagIds;
-    @ApiModelProperty(value = "数据集Ids")
-    private List<Long> dataSetIds;
+    @ApiModelProperty(value = "数据集Id")
+    private Long dataSetId;
 }

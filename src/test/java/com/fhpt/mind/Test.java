@@ -3,6 +3,10 @@ package com.fhpt.mind;
 import com.fhpt.imageqmind.ImageQMindWebApplication;
 
 
+
+import com.fhpt.imageqmind.config.MinIOProperties;
+
+import com.fhpt.imageqmind.service.DataSetService;
 import com.fhpt.imageqmind.utils.SpringContextUtil;
 
 
@@ -39,6 +43,12 @@ import java.util.List;
 @SpringBootTest(classes = ImageQMindWebApplication.class)
 public class Test {
 
+    @Autowired
+    private MinIOProperties minIOProperties;
+
+    @Autowired
+    private DataSetService dataSetService;
+
     @org.junit.Test
     public void test(){
         Object o = SpringContextUtil.getBean("tagLabelServiceImpl");
@@ -48,6 +58,12 @@ public class Test {
 
     @org.junit.Test
     public void minIO(){
+
+        try {
+            Class.forName("com.fhpt.imageqmind.utils.MinioUtil");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         try {
             MinioClient minioClient = new MinioClient("https://play.min.io", "Q3AM3UQ867SPQQA43P2F",
                     "zuf+tfteSlswRu7BJ86wekitnifILbZam1KYY3TG");
@@ -92,5 +108,11 @@ public class Test {
         } catch (Exception e) {
             System.out.println("Error occurred: " + e);
         }
+    }
+
+    @org.junit.Test
+    public void testAOP(){
+        dataSetService.query(1, 10);
+        int i = 0;
     }
 }

@@ -16,6 +16,7 @@ public class TaskInfoEntity {
     private String name;
     private Integer size;
     private Integer status;
+    private Long currentRowId;
     private BigDecimal process;
     private String createdBy;
     private Timestamp updateTime;
@@ -64,6 +65,16 @@ public class TaskInfoEntity {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    @Basic
+    @Column(name = "current_row_id", nullable = true)
+    public Long getCurrentRowId() {
+        return currentRowId;
+    }
+
+    public void setCurrentRowId(Long currentRowId) {
+        this.currentRowId = currentRowId;
     }
 
     @Basic

@@ -4,6 +4,10 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+
+
+import java.util.List;
+
 /**
  * 数据行信息
  * @author Marty
@@ -25,4 +29,14 @@ public class DataRowVo {
     private String updateTime;
     @ApiModelProperty(value = "创建人")
     private String createdBy;
+    @ApiModelProperty(value = "标签下的标注统计信息")
+    private List<TagLabelVo> tagLabels;
+    @ApiModelProperty(value = "该文章标记总量")
+    private long tagSize;
+    @ApiModelProperty(value = "任务总量")
+    private int allSize;
+    @ApiModelProperty(value = "任务完成量")
+    private int finishedSize;
+    @ApiModelProperty(value = "任务进度")
+    private double process;
 }

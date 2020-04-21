@@ -10,9 +10,11 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "label_result", schema = "imageq-mind")
 public class LabelResultEntity {
-    private int id;
+    private long id;
     private Integer start;
     private Integer end;
+    private Integer colorIndex;
+    private String content;
     private Timestamp createTime;
     private Timestamp updateTime;
     private String createdBy;
@@ -26,11 +28,11 @@ public class LabelResultEntity {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -52,6 +54,26 @@ public class LabelResultEntity {
 
     public void setEnd(Integer end) {
         this.end = end;
+    }
+
+    @Basic
+    @Column(name = "color_index", nullable = true)
+    public Integer getColorIndex() {
+        return colorIndex;
+    }
+
+    public void setColorIndex(Integer colorIndex) {
+        this.colorIndex = colorIndex;
+    }
+
+    @Basic
+    @Column(name = "content", nullable = true)
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     @Basic
@@ -84,7 +106,7 @@ public class LabelResultEntity {
         this.createdBy = createdBy;
     }
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "row_id", referencedColumnName = "id")
     public DataRowEntity getDataRow() {
         return dataRow;
@@ -94,7 +116,7 @@ public class LabelResultEntity {
         this.dataRow = dataRow;
     }
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "task_id", referencedColumnName = "id")
     public TaskInfoEntity getTaskInfo() {
         return taskInfo;
@@ -104,7 +126,7 @@ public class LabelResultEntity {
         this.taskInfo = taskInfo;
     }
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "tag_id", referencedColumnName = "id")
     public TagLabelEntity getTagLabel() {
         return tagLabel;
@@ -134,7 +156,7 @@ public class LabelResultEntity {
 
     @Override
     public int hashCode() {
-        int result = id;
+        int result = (int)id;
         result = 31 * result + (start != null ? start.hashCode() : 0);
         result = 31 * result + (end != null ? end.hashCode() : 0);
         return result;

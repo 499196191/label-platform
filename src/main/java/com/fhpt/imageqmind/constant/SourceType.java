@@ -8,7 +8,7 @@ import cn.hutool.core.lang.Assert;
  */
 public enum SourceType {
 
-    ORACLE(1, "oracle数据源"), MYSQL(2, "mysql数据源"), Excel(3, "excel文件"), CSV(4, "csv文件");
+    ORACLE(1, "oracle数据源"), MYSQL(2, "mysql数据源"), Excel(3, "excel文件"), CSV(4, "csv文件"), PG(5, "PG数据源");
 
     private int type;
 
@@ -32,7 +32,7 @@ public enum SourceType {
         String name = "";
         for (SourceType dataType : values()) {
             if (dataType.type == type.intValue()) {
-                name = dataType.name;
+                return dataType.name;
             }
         }
         return name;
@@ -43,7 +43,7 @@ public enum SourceType {
         int type = 0;
         for (SourceType dataType : values()) {
             if (dataType.name.equals(name)) {
-                type = dataType.type;
+                return dataType.type;
             }
         }
         return type;

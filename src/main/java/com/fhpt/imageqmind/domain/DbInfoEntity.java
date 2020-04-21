@@ -14,10 +14,11 @@ public class DbInfoEntity {
     private String connectName;
     private String ip;
     private Integer port;
-    private String username;
+    private String userName;
     private String password;
-    private String databaseName;
+    private String dbName;
     private String tableName;
+    private String schema;
     private Timestamp createTime;
     private Timestamp updateTime;
     private String createdBy;
@@ -65,12 +66,12 @@ public class DbInfoEntity {
 
     @Basic
     @Column(name = "username", nullable = true, length = 255)
-    public String getUsername() {
-        return username;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     @Basic
@@ -85,12 +86,12 @@ public class DbInfoEntity {
 
     @Basic
     @Column(name = "database_name", nullable = true, length = 255)
-    public String getDatabaseName() {
-        return databaseName;
+    public String getDbName() {
+        return dbName;
     }
 
-    public void setDatabaseName(String databaseName) {
-        this.databaseName = databaseName;
+    public void setDbName(String databaseName) {
+        this.dbName = databaseName;
     }
 
     @Basic
@@ -101,6 +102,16 @@ public class DbInfoEntity {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
+    }
+
+    @Basic
+    @Column(name = "pg_schema", nullable = true, length = 255)
+    public String getSchema() {
+        return schema;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
     }
 
     @Basic
@@ -149,7 +160,7 @@ public class DbInfoEntity {
             return false;
         if (port != null ? !port.equals(that.port) : that.port != null)
             return false;
-        if (username != null ? !username.equals(that.username) : that.username != null)
+        if (userName != null ? !userName.equals(that.userName) : that.userName != null)
             return false;
         if (password != null ? !password.equals(that.password) : that.password != null)
             return false;
@@ -168,7 +179,7 @@ public class DbInfoEntity {
         int result = (int) (id ^ (id >>> 32));
         result = 31 * result + (ip != null ? ip.hashCode() : 0);
         result = 31 * result + (port != null ? port.hashCode() : 0);
-        result = 31 * result + (username != null ? username.hashCode() : 0);
+        result = 31 * result + (userName != null ? userName.hashCode() : 0);
         result = 31 * result + (password != null ? password.hashCode() : 0);
         result = 31 * result + (createTime != null ? createTime.hashCode() : 0);
         result = 31 * result + (updateTime != null ? updateTime.hashCode() : 0);

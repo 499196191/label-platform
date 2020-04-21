@@ -10,4 +10,6 @@ public interface SyncDataService {
 
     boolean syncData(DataSetEntity dataSet);
 
+    boolean connect(String ip, int port, String userName, String password, String dbName, String tableName, String columnName, String schema);
+
 }

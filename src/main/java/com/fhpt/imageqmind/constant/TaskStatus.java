@@ -4,12 +4,12 @@ import cn.hutool.core.lang.Assert;
 
 
 /**
- * 数据源类型
+ * 任务类型
  * @author Marty
  */
 public enum TaskStatus {
 
-    NOT_START(0, "未开始"), STARTING(1, "进行中"), FINISHED(2, "已完成");
+    NOT_START(0, "未开始"), STARTING(1, "进行中"), FINISHED(2, "已完成"), STOPPED(3, "已停止");
 
     private int type;
 
@@ -33,7 +33,7 @@ public enum TaskStatus {
         String name = "";
         for (TaskStatus dataType : values()) {
             if (dataType.type == type.intValue()) {
-                name = dataType.name;
+                return dataType.name;
             }
         }
         return name;
@@ -44,7 +44,7 @@ public enum TaskStatus {
         int type = 0;
         for (TaskStatus dataType : values()) {
             if (dataType.name.equals(name)) {
-                type = dataType.type;
+                return dataType.type;
             }
         }
         return type;

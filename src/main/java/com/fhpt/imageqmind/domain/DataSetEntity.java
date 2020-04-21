@@ -15,9 +15,11 @@ public class DataSetEntity {
     private int sourceType;
     private String typeNames;
     private Integer size;
+    private Integer maxSize;
     private String createdBy;
-    private String describe;
+    private String description;
     private String columnName;
+    private Integer isDelete;
     private Timestamp updateTime;
     private Timestamp createTime;
     /**
@@ -82,6 +84,16 @@ public class DataSetEntity {
     }
 
     @Basic
+    @Column(name = "max_size", nullable = true)
+    public Integer getMaxSize() {
+        return maxSize;
+    }
+
+    public void setMaxSize(Integer maxSize) {
+        this.maxSize = maxSize;
+    }
+
+    @Basic
     @Column(name = "created_by", nullable = true, length = 255)
     public String getCreatedBy() {
         return createdBy;
@@ -92,13 +104,13 @@ public class DataSetEntity {
     }
 
     @Basic
-    @Column(name = "describe", nullable = true, length = 255)
-    public String getDescribe() {
-        return describe;
+    @Column(name = "description", nullable = true, length = 255)
+    public String getDescription() {
+        return description;
     }
 
-    public void setDescribe(String describe) {
-        this.describe = describe;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Basic
@@ -109,6 +121,16 @@ public class DataSetEntity {
 
     public void setColumnName(String columnName) {
         this.columnName = columnName;
+    }
+
+    @Basic
+    @Column(name = "is_delete", nullable = false)
+    public Integer getIsDelete() {
+        return isDelete;
+    }
+
+    public void setIsDelete(Integer isDelete) {
+        this.isDelete = isDelete;
     }
 
     @Basic
@@ -151,7 +173,7 @@ public class DataSetEntity {
         this.fileInfo = fileInfo;
     }
 
-    @OneToMany(cascade = CascadeType.REFRESH)
+    @OneToMany(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "data_set_id", referencedColumnName = "id")
     public List<DataRowEntity> getDataRowEntities() {
         return dataRowEntities;

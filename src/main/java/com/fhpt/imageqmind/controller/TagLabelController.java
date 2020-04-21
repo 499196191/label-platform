@@ -1,11 +1,11 @@
 package com.fhpt.imageqmind.controller;
 
+import com.fhpt.imageqmind.annotation.EagleEye;
+
+import com.fhpt.imageqmind.exceptions.VerifyException;
 import com.fhpt.imageqmind.objects.PageInfo;
 
 import com.fhpt.imageqmind.objects.Result;
-
-
-import com.fhpt.imageqmind.objects.vo.DataSetVo;
 
 
 import com.fhpt.imageqmind.objects.vo.TagLabelCount;
@@ -46,6 +46,10 @@ public class TagLabelController {
     @PostMapping("/add")
     public Result<TagLabelVo> add(@RequestBody TagLabelVo tagLabel) {
         Result<TagLabelVo> result = new Result<>();
+        if (!tagLabelService.isValid(tagLabel.getName(), tagLabel.getEnglishName())) {
+            result.code = -1;
+            result.msg = "标签中文名和英文名不能包含空格，并且不能以数字开头";
+        }
         result.data = tagLabelService.add(tagLabel);
         if (result.data.getId() != 0) {
             result.code = 0;
@@ -53,6 +57,34 @@ public class TagLabelController {
         } else {
             result.code = -1;
             result.msg = String.format("已存在中文名/英文名为{%s/%s}的标签，请重新命名！", tagLabel.getName(), tagLabel.getEnglishName());
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "验证标签名称是否可用", notes = "用户可以及时验证标签是否在当前分组存在重名")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "type", value = "类型", dataType = "integer", paramType = "query", required = true),
+            @ApiImplicitParam(name = "name", value = "名称", dataType = "string", paramType = "query", required = true),
+            @ApiImplicitParam(name = "isChinese", value = "是否是中文", dataType = "boolean", paramType = "query", required = true)
+    })
+    @GetMapping("/verify")
+    public Result<Boolean> verify(@RequestParam(value = "type", required = true) Integer type,
+                                  @RequestParam(value = "name", required = true) String name,
+                                  @RequestParam(value = "isChinese", required = true) Boolean isChinese) {
+
+        Result<Boolean> result = new Result<>();
+        try {
+            result.data = tagLabelService.verify(type, name, isChinese);
+            result.msg = "验证成功";
+            result.code = 0;
+        } catch (VerifyException e) {
+            result.msg = e.getMessage();
+            result.data = false;
+            result.code = 0;
+        } catch (Exception e) {
+            result.code = -1;
+            result.msg = "验证失败";
+            result.data = false;
         }
         return result;
     }
@@ -71,9 +103,15 @@ public class TagLabelController {
     @ApiOperation(value = "标签查询")
     @ApiOperationSort(3)
     @GetMapping("/query")
-    public Result<PageInfo<TagLabelVo>> query(@RequestParam(value = "type", defaultValue = "0", required = false) Integer type,
+    @EagleEye
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "type", value = "类型", dataType = "integer", paramType = "query"),
+            @ApiImplicitParam(name = "page", value = "页码", dataType = "integer", paramType = "query"),
+            @ApiImplicitParam(name = "pageSize", value = "页大小", dataType = "integer", paramType = "query")
+    })
+    public Result<PageInfo<TagLabelVo>> query(@RequestParam(value = "type", defaultValue = "-1", required = false) Integer type,
                                               @RequestParam(value = "page", defaultValue = "1", required = false) Integer page,
-                                              @RequestParam(value = "page", defaultValue = "10", required = false) Integer pageSize){
+                                              @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize){
         Result<PageInfo<TagLabelVo>> result = new Result<>();
         result.data = tagLabelService.query(type, page, pageSize);
         result.code = 0;
@@ -84,16 +122,20 @@ public class TagLabelController {
     @ApiOperation(value = "标签删除")
     @ApiOperationSort(4)
     @GetMapping("/delete")
-    public Result delete(@RequestParam(value = "id") Long id){
+    public Result delete(@RequestParam(value = "id") String ids){
         Result result = new Result<>();
         try {
-            tagLabelService.delete(id);
-            result.code = 0;
-            result.msg = "删除成功";
+            if(tagLabelService.delete(ids)){
+                result.code = 0;
+                result.msg = "删除成功";
+            }else{
+                result.code = -1;
+                result.msg = "删除失败：传递的[ids]参数为空";
+            }
         } catch (Exception e) {
             e.printStackTrace();
             result.code = -1;
-            result.msg = "删除失败：未找到数据";
+            result.msg = "删除失败：数据库异常";
         }
         return result;
     }

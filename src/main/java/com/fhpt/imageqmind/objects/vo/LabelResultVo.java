@@ -12,18 +12,19 @@ import lombok.Data;
 @Data
 public class LabelResultVo {
     @ApiModelProperty(name="id",value = "主键id，新增时可以不传递", required = false)
-    private int id;
+    private long id;
     @ApiModelProperty(value = "游标开始位置")
     private Integer start;
     @ApiModelProperty(value = "游标结束位置")
     private Integer end;
-    //数据行
+    @ApiModelProperty(value = "颜色数组索引")
+    private Integer colorIndex;
+    @ApiModelProperty(value = "划词内容")
+    private String content;
     @ApiModelProperty(value = "数据行信息")
     private DataRowVo dataRow;
-    //任务信息
     @ApiModelProperty(value = "任务信息")
     private TaskInfoVo taskInfo;
-    //标签信息
     @ApiModelProperty(value = "标签信息")
     private TagLabelVo tagLabel;
 }

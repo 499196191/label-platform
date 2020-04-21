@@ -18,7 +18,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication
 @EntityScan(basePackages = "com.fhpt.imageqmind.domain")
-@EnableConfigurationProperties(MinIOProperties.class)
+@EnableConfigurationProperties
 @EnableScheduling
 @EnableAsync
 @EnableAspectJAutoProxy

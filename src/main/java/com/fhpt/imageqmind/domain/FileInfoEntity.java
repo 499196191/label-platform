@@ -12,6 +12,7 @@ import java.sql.Timestamp;
 @Table(name = "file_info", schema = "imageq-mind")
 public class FileInfoEntity {
     private long id;
+    private String sheetName;
     private String path;
     private String createdBy;
     private Timestamp createTime;
@@ -26,6 +27,16 @@ public class FileInfoEntity {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    @Basic
+    @Column(name = "sheet_name", nullable = true, length = 255)
+    public String getSheetName() {
+        return sheetName;
+    }
+
+    public void setSheetName(String sheetName) {
+        this.sheetName = sheetName;
     }
 
     @Basic

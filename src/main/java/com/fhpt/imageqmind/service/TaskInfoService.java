@@ -14,7 +14,13 @@ public interface TaskInfoService {
 
     TaskInfoVo detail(Long taskId);
 
-    PageInfo<TaskInfoVo> query(Integer page, Integer pageSize);
+    PageInfo<TaskInfoVo> query(Integer page, Integer pageSize, Long typeId, Integer status, String tag, String name, boolean sizeIsNotZero);
 
-    TaskInfoVo add(AddTaskVo addTaskVo);
+    long add(AddTaskVo addTaskVo);
+
+    boolean delete(Long taskId);
+
+    boolean stop(Long taskId);
+
+    boolean restart(Long taskId);
 }

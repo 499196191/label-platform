@@ -14,7 +14,10 @@ public class TagLabelEntity {
     private Integer type;
     private String name;
     private String englishName;
+    private String fontColor;
+    private String backgroundColor;
     private String tagClass;
+    private Integer isDelete;
     private String createdBy;
     private Timestamp updateTime;
     private Timestamp createTime;
@@ -68,6 +71,36 @@ public class TagLabelEntity {
 
     public void setTagClass(String tagClass) {
         this.tagClass = tagClass;
+    }
+
+    @Basic
+    @Column(name = "font_color", nullable = true, length = 255)
+    public String getFontColor() {
+        return fontColor;
+    }
+
+    public void setFontColor(String fontColor) {
+        this.fontColor = fontColor;
+    }
+
+    @Basic
+    @Column(name = "backgroud_color", nullable = true, length = 255)
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(String backgroudColor) {
+        this.backgroundColor = backgroudColor;
+    }
+
+    @Basic
+    @Column(name = "is_delete", nullable = false)
+    public Integer getIsDelete() {
+        return isDelete;
+    }
+
+    public void setIsDelete(Integer isDelete) {
+        this.isDelete = isDelete;
     }
 
     @Basic

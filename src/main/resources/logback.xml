@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property name="logDir" value="/data/apps/dianwang_zhaoyan/logs"/>
+    <!--设置变量，可以使“${}”来使用变量-->
+    <property name="logDir" value="/apps/label/logs"/>
     <property name="log.colorPattern" value="%d{yyyy-MM-dd HH:mm:ss} | %highlight(%-5level) | %boldYellow(%thread) | %boldGreen(%logger) | %msg%n"/>
+    <!--控制台日志ConsoleAppender-->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${log.colorPattern}</pattern>
         </encoder>
     </appender>
+    <!--文件滚动日志RollingFileAppender-->
     <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${logDir}/server.log</file>
+        <!--时间来制定滚动策略-->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${logDir}/server.%d.zip</fileNamePattern>
+            <!--保存10天的文件-->
             <maxHistory>10</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -51,41 +56,6 @@
             <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] - %level - %logger : %msg%n</pattern>
         </encoder>
     </appender>
-
-    <!-- 数据库统计单独一个日志文件 -->
-    <appender name="StorageManager" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logDir}/storageManager.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${logDir}/storageManager.log.%d.zip</fileNamePattern>
-            <maxHistory>10</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <charset>utf8</charset>
-            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] - %level : %msg%n</pattern>
-        </encoder>
-    </appender>
-    <!-- 系统错误日志单独文件记录 -->
-    <appender name="errorCodeLoggerAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${logDir}/errorCode.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${logDir}/systemError.log.%i.zip</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>10</maxIndex>
-        </rollingPolicy>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>10MB</maxFileSize>
-        </triggeringPolicy>
-        <encoder>
-            <charset>utf8</charset>
-            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%thread] - %level : %msg%n</pattern>
-        </encoder>
-    </appender>
-    <logger name="cn.imageq.db.StorageManager" level="INFO" additivity="false">
-        <appender-ref ref="StorageManager"/>
-    </logger>
-    <logger name="ErrorCodeLogger" level="ERROR" additivity="false">
-        <appender-ref ref="errorCodeLoggerAppender"/>
-    </logger>
 
     <root level="INFO">
         <appender-ref ref="file"/>

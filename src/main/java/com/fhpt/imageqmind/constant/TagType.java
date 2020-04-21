@@ -33,7 +33,7 @@ public enum TagType {
         String name = "";
         for (TagType dataType : values()) {
             if (dataType.type == type.intValue()) {
-                name = dataType.name;
+                return dataType.name;
             }
         }
         return name;
@@ -44,7 +44,7 @@ public enum TagType {
         int type = 0;
         for (TagType dataType : values()) {
             if (dataType.name.equals(name)) {
-                type = dataType.type;
+                return dataType.type;
             }
         }
         return type;

@@ -2,10 +2,8 @@ package com.fhpt.imageqmind.factory;
 
 import com.fhpt.imageqmind.constant.SourceType;
 import com.fhpt.imageqmind.service.SyncDataService;
-import com.fhpt.imageqmind.service.impl.SyncCsvData;
-import com.fhpt.imageqmind.service.impl.SyncExcelData;
-import com.fhpt.imageqmind.service.impl.SyncMysqlData;
-import com.fhpt.imageqmind.service.impl.SyncOracleData;
+
+import com.fhpt.imageqmind.service.impl.*;
 
 /**
  * 数据同步业务Bean工厂
@@ -28,6 +26,8 @@ public class SyncServiceBeanFactory {
                 return new SyncCsvData();
             case Excel:
                 return new SyncExcelData();
+            case PG:
+                return new SyncPGData();
         }
         return null;
     }

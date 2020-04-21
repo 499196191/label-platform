@@ -15,14 +15,16 @@ public class TaskInfoEntity {
     private long id;
     private String name;
     private Integer size;
+    private Integer finishedSize;
     private Integer status;
     private Long currentRowId;
     private BigDecimal process;
+    private Integer isDelete;
     private String createdBy;
     private Timestamp updateTime;
     private Timestamp createTime;
-    private TaskTypeEntity taskType;
 
+    private TaskTypeEntity taskType;
     private List<DataSetEntity> dataSetEntities;
     private List<TagLabelEntity> tagLabelEntities;
 
@@ -58,6 +60,16 @@ public class TaskInfoEntity {
     }
 
     @Basic
+    @Column(name = "finished_size", nullable = true)
+    public Integer getFinishedSize() {
+        return finishedSize;
+    }
+
+    public void setFinishedSize(Integer finishedSize) {
+        this.finishedSize = finishedSize;
+    }
+
+    @Basic
     @Column(name = "status", nullable = true)
     public Integer getStatus() {
         return status;
@@ -85,6 +97,16 @@ public class TaskInfoEntity {
 
     public void setProcess(BigDecimal process) {
         this.process = process;
+    }
+
+    @Basic
+    @Column(name = "is_delete", nullable = false)
+    public Integer getIsDelete() {
+        return isDelete;
+    }
+
+    public void setIsDelete(Integer isDelete) {
+        this.isDelete = isDelete;
     }
 
     @Basic
@@ -117,7 +139,7 @@ public class TaskInfoEntity {
         this.createTime = createTime;
     }
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "type_id", referencedColumnName = "id")
     public TaskTypeEntity getTaskType() {
         return taskType;

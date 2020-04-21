@@ -15,4 +15,9 @@ public class SyncCsvData extends AbstractSyncData {
     public boolean syncData(DataSetEntity dataSet) {
         return false;
     }
+
+    @Override
+    public boolean connect(String ip, int port, String userName, String password, String dbName, String tableName, String columnName, String schema) {
+        return false;
+    }
 }

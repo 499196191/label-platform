@@ -1,0 +1,19 @@
+#stages:
+#  - build
+#  - run
+#  - clean
+#build:
+#  stage: build
+#  script:
+#    - /usr/local/maven/apache-maven-3.5.3/bin/mvn clean package
+#    - cp target/imageq-label-1.0-SNAPSHOT.jar ./
+#    - docker build -t label:v0.1 .
+#run:
+#  stage: run
+#  script:
+#    - docker-compose down
+#    - docker-compse up -d
+#clean:
+#  stage: clean
+#  script:
+#    - docker rmi ${docker images -q -f dangling=true}

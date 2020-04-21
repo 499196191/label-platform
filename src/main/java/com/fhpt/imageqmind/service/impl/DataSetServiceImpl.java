@@ -1,30 +1,36 @@
 package com.fhpt.imageqmind.service.impl;
 
+import com.fhpt.imageqmind.config.SystemProperties;
+
+import com.fhpt.imageqmind.constant.DeleteStatus;
 import com.fhpt.imageqmind.constant.SourceType;
 
-import com.fhpt.imageqmind.domain.DataSetEntity;
-import com.fhpt.imageqmind.domain.DbInfoEntity;
+import com.fhpt.imageqmind.domain.*;
 
 import com.fhpt.imageqmind.factory.SyncServiceBeanFactory;
 import com.fhpt.imageqmind.objects.PageInfo;
 import com.fhpt.imageqmind.objects.vo.DataSetVo;
 import com.fhpt.imageqmind.objects.vo.DbInfoVo;
+import com.fhpt.imageqmind.objects.vo.FileInfoVo;
 import com.fhpt.imageqmind.repository.DataSetRepository;
-import com.fhpt.imageqmind.repository.DbInfoRepository;
-import com.fhpt.imageqmind.service.DataSetService;
 
+
+
+import com.fhpt.imageqmind.repository.LabelResultRepository;
+import com.fhpt.imageqmind.repository.TaskInfoRepository;
+import com.fhpt.imageqmind.service.DataSetService;
 import com.fhpt.imageqmind.service.SyncDataService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-
+import org.springframework.util.StringUtils;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,30 +43,91 @@ public class DataSetServiceImpl implements DataSetService {
     @Autowired
     private DataSetRepository dataSetRepository;
     @Autowired
-    private DbInfoRepository dbInfoRepository;
+    private SystemProperties systemProperties;
+    @Autowired
+    private TaskInfoRepository taskInfoRepository;
+    @Autowired
+    private LabelResultRepository labelResultRepository;
+    @PersistenceContext
+    private EntityManager em;
 
     /**
      * 查询列表
      */
     @Override
-    public PageInfo<DataSetVo> query(int page, int pageSize) {
-        Page<DataSetEntity> list = dataSetRepository.findAll(PageRequest.of(page - 1, pageSize));
+    public PageInfo<DataSetVo> query(int page, int pageSize, int sourceType, String typeNames, String name) {
+        StringBuilder sql = new StringBuilder("select d from DataSetEntity d where 1=1 ");
+        StringBuilder sqlCount = new StringBuilder("select count(d.id) from DataSetEntity d where 1=1 ");
+        Map<String, Object> params = new HashMap<>();
+        if (StringUtils.hasText(name)) {
+            sql.append(" and d.name like :name");
+            sqlCount.append(" and d.name like :name");
+            params.put("name", "%" + name + "%");
+        }
+        if (sourceType != -1) {
+            sql.append(" and d.sourceType = :sourceType");
+            sqlCount.append(" and d.sourceType = :sourceType");
+            params.put("sourceType", sourceType);
+        }
+        if(StringUtils.hasText(typeNames)){
+            sql.append(" and (");
+            sqlCount.append(" and (");
+            String[] typeNamesArray = typeNames.split(",");
+            for (int i = 0; i < typeNamesArray.length; i++) {
+                String typeName = typeNamesArray[i];
+                if (i == 0) {
+                    sql.append(" d.typeNames like '%" + typeName + "%'");
+                    sqlCount.append(" d.typeNames like '%" + typeName + "%'");
+                } else {
+                    sql.append(" or d.typeNames like '%" + typeName + "%'");
+                    sqlCount.append(" or d.typeNames like '%" + typeName + "%'");
+                }
+            }
+            sql.append(" ) ");
+            sqlCount.append(" ) ");
+        }
+        sql.append(" and d.isDelete = 0 order by d.createTime desc");
+        sqlCount.append(" and d.isDelete = 0 order by d.createTime desc");
+        Query query = em.createQuery(sql.toString());
+        Query queryCount = em.createQuery(sqlCount.toString());
+        params.forEach((k, v) -> {
+            query.setParameter(k, v);
+            queryCount.setParameter(k, v);
+        });
+        List<DataSetEntity> list;
+        if (pageSize == -1) {
+            list = (List<DataSetEntity>) query.getResultList();
+        } else {
+            list = (List<DataSetEntity>) query.setFirstResult((page - 1) * pageSize).setMaxResults(pageSize).getResultList();
+        }
+        long count = (Long)queryCount.getSingleResult();
         PageInfo result = new PageInfo();
-        result.setTotal(list.getTotalElements());
-        List<DataSetVo> info = list.getContent().stream().map(dataSetEntity -> {
+        result.setTotal(count);
+        List<DataSetVo> info = list.stream().map(dataSetEntity -> {
             DataSetVo dataSetVo = new DataSetVo();
             dataSetVo.setId(dataSetEntity.getId());
             dataSetVo.setName(dataSetEntity.getName());
-            dataSetVo.setDescribe(dataSetEntity.getDescribe());
+            dataSetVo.setSize(dataSetEntity.getSize());
+            dataSetVo.setDescribe(dataSetEntity.getDescription());
             dataSetVo.setCreateTime(dataSetEntity.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             dataSetVo.setUpdateTime(dataSetEntity.getUpdateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             dataSetVo.setType(dataSetEntity.getSourceType());
-            DbInfoVo dbInfoVo = new DbInfoVo();
-            dbInfoVo.setIp(dataSetEntity.getDbInfo().getIp());
-            dbInfoVo.setPort(dataSetEntity.getDbInfo().getPort());
-            dbInfoVo.setUsername(dataSetEntity.getDbInfo().getUsername());
-            dbInfoVo.setPassword(dataSetEntity.getDbInfo().getPassword());
-            dataSetVo.setDbInfo(dbInfoVo);
+            SourceType sourceTypeEnum = SourceType.getByType(dataSetEntity.getSourceType());
+            if (sourceTypeEnum == SourceType.ORACLE || sourceTypeEnum == SourceType.MYSQL) {
+                DbInfoVo dbInfoVo = new DbInfoVo();
+                dbInfoVo.setIp(dataSetEntity.getDbInfo().getIp());
+                dbInfoVo.setConnectName(dataSetEntity.getDbInfo().getConnectName());
+                dbInfoVo.setPort(dataSetEntity.getDbInfo().getPort());
+                dbInfoVo.setUserName(dataSetEntity.getDbInfo().getUserName());
+                dbInfoVo.setPassword(dataSetEntity.getDbInfo().getPassword());
+                dataSetVo.setDbInfo(dbInfoVo);
+                dataSetVo.setColumnName(dataSetEntity.getColumnName());
+            } else if (sourceTypeEnum == SourceType.Excel || sourceTypeEnum == SourceType.CSV) {
+                FileInfoVo fileInfoVo = new FileInfoVo();
+                fileInfoVo.setSheetName(dataSetEntity.getFileInfo().getSheetName());
+                fileInfoVo.setPath(dataSetEntity.getFileInfo().getPath());
+                dataSetVo.setFileInfo(fileInfoVo);
+            }
             return dataSetVo;
         }).collect(Collectors.toList());
         result.setList(info);
@@ -76,26 +143,51 @@ public class DataSetServiceImpl implements DataSetService {
         //保存数据集信息
         DataSetEntity dataSetEntity = new DataSetEntity();
         dataSetEntity.setName(dataSetVo.getName());
-        dataSetEntity.setDescribe(dataSetVo.getDescribe());
+        dataSetEntity.setDescription(dataSetVo.getDescribe());
         Timestamp now = Timestamp.from(Instant.now());
         dataSetEntity.setCreateTime(now);
         dataSetEntity.setUpdateTime(now);
         dataSetEntity.setSourceType(dataSetVo.getType());
         dataSetEntity.setColumnName(dataSetVo.getColumnName());
-        //保存数据源信息
-        DbInfoVo dbInfoVo = dataSetVo.getDbInfo();
-        if (dbInfoVo != null) {
-            DbInfoEntity dbInfoEntity = new DbInfoEntity();
-            dbInfoEntity.setCreateTime(now);
-            dbInfoEntity.setUpdateTime(now);
-            dbInfoEntity.setIp(dbInfoVo.getIp());
-            dbInfoEntity.setPort(dbInfoVo.getPort());
-            dbInfoEntity.setUsername(dbInfoVo.getUsername());
-            dbInfoEntity.setPassword(dbInfoVo.getPassword());
-            dataSetEntity.setDbInfo(dbInfoEntity);
+        dataSetEntity.setTypeNames(dataSetVo.getTypeNames() == null ? "" : dataSetVo.getTypeNames());
+        dataSetEntity.setMaxSize(systemProperties.getSyncNum());
+        dataSetEntity.setIsDelete(DeleteStatus.NOT_DELETE.getType());
+        SourceType sourceType = SourceType.getByType(dataSetVo.getType());
+        if (sourceType == SourceType.MYSQL || sourceType == SourceType.ORACLE || sourceType == SourceType.PG) {
+            //保存mysql/oracle信息
+            DbInfoVo dbInfoVo = dataSetVo.getDbInfo();
+            if (dbInfoVo != null) {
+                DbInfoEntity dbInfoEntity = new DbInfoEntity();
+                dbInfoEntity.setConnectName(dbInfoVo.getConnectName());
+                dbInfoEntity.setCreateTime(now);
+                dbInfoEntity.setUpdateTime(now);
+                dbInfoEntity.setIp(dbInfoVo.getIp());
+                dbInfoEntity.setPort(dbInfoVo.getPort());
+                dbInfoEntity.setUserName(dbInfoVo.getUserName());
+                dbInfoEntity.setPassword(dbInfoVo.getPassword());
+                dbInfoEntity.setDbName(dbInfoVo.getDbName());
+                dbInfoEntity.setTableName(dbInfoVo.getTableName());
+                if (StringUtils.hasText(dbInfoVo.getSchema())) {
+                    dbInfoEntity.setSchema(StringUtils.trimAllWhitespace(dbInfoVo.getSchema()));
+                } else {
+                    dbInfoEntity.setSchema("");
+                }
+                dataSetEntity.setDbInfo(dbInfoEntity);
+            }
+        } else if (sourceType == SourceType.Excel) {
+            FileInfoVo fileInfoVo = dataSetVo.getFileInfo();
+            //保存文件信息
+            FileInfoEntity fileInfoEntity = new FileInfoEntity();
+            fileInfoEntity.setPath(fileInfoVo.getPath());
+            fileInfoEntity.setSheetName(fileInfoVo.getSheetName());
+            fileInfoEntity.setCreateTime(now);
+            fileInfoEntity.setUpdateTime(now);
+            dataSetEntity.setFileInfo(fileInfoEntity);
         }
         dataSetRepository.save(dataSetEntity);
         dataSetVo.setId(dataSetEntity.getId());
+        //如果是数据库数据源或者文件数据，同步数据至本系统
+        syncData(dataSetEntity.getId());
         return dataSetVo;
     }
 
@@ -115,7 +207,7 @@ public class DataSetServiceImpl implements DataSetService {
         DbInfoEntity dbInfoEntity = new DbInfoEntity();
         dbInfoEntity.setIp(dataSetVo.getDbInfo().getIp());
         dbInfoEntity.setPort(dataSetVo.getDbInfo().getPort());
-        dbInfoEntity.setUsername(dataSetVo.getDbInfo().getUsername());
+        dbInfoEntity.setUserName(dataSetVo.getDbInfo().getUserName());
         dbInfoEntity.setPassword(dataSetVo.getDbInfo().getPassword());
         dbInfoEntity.setUpdateTime(Timestamp.from(Instant.now()));
         dataSetEntity.setDbInfo(dbInfoEntity);
@@ -123,24 +215,27 @@ public class DataSetServiceImpl implements DataSetService {
         return dataSetVo;
     }
 
+    @Override
+    public boolean connectDB(int sourceType, String ip, int port, String userName, String password, String dbName, String tableName, String columnName, String schema) {
+        SourceType sourceTypeEnum = SourceType.getByType(sourceType);
+        SyncDataService syncDataService = SyncServiceBeanFactory.getInstance(sourceTypeEnum);
+        //执行连接测试
+        return syncDataService.connect(ip, port, userName, password, dbName, tableName, columnName, schema);
+    }
 
     /**
      * 更新
      */
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public boolean update(Long id, String name, String ip, Integer port, String username, String password) {
+    public boolean update(Long id, String name, String typeNames, String describe) {
         Optional<DataSetEntity> entityOptional = dataSetRepository.findById(id);
         if (entityOptional.isPresent()) {
             DataSetEntity dataSetEntity = entityOptional.get();
             dataSetEntity.setName(name);
+            dataSetEntity.setTypeNames(typeNames);
+            dataSetEntity.setDescription(describe);
             dataSetEntity.setUpdateTime(Timestamp.from(Instant.now()));
-            DbInfoEntity dbInfoEntity = dataSetEntity.getDbInfo();
-            dbInfoEntity.setIp(ip);
-            dbInfoEntity.setPort(port);
-            dbInfoEntity.setUsername(username);
-            dbInfoEntity.setPassword(password);
-            dbInfoEntity.setUpdateTime(Timestamp.from(Instant.now()));
             dataSetRepository.save(dataSetEntity);
             return true;
         } else {
@@ -151,13 +246,27 @@ public class DataSetServiceImpl implements DataSetService {
     @Override
     @Transactional(rollbackOn = Exception.class)
     public boolean delete(long id) {
-        try {
-            dataSetRepository.deleteById(id);
+        //            dataSetRepository.deleteById(id);
+        //            List<TaskInfoEntity> taskInfoEntityList = taskInfoRepository.getAll(id);
+        //            if (taskInfoEntityList != null) {
+        //                //清除已有的标注
+        //                taskInfoEntityList.forEach(taskInfoEntity -> {
+        //                    List<LabelResultEntity> list = labelResultRepository.getAll(taskInfoEntity.getId());
+        //                    labelResultRepository.deleteAll(list);
+        //                });
+        //                //删除数据集下面的任务
+        //                taskInfoRepository.deleteAll(taskInfoEntityList);
+        //            }
+        //这里使用伪删除
+        Optional<DataSetEntity> optionalDataSetEntity = dataSetRepository.findById(id);
+        if (!optionalDataSetEntity.isPresent()) {
+            return false;
+        } else {
+            DataSetEntity dataSetEntity = optionalDataSetEntity.get();
+            dataSetEntity.setIsDelete(DeleteStatus.DELETE.getType());
+            dataSetRepository.save(dataSetEntity);
             return true;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return false;
     }
 
     @Override
@@ -165,7 +274,6 @@ public class DataSetServiceImpl implements DataSetService {
         Optional<DataSetEntity> entityOptional = dataSetRepository.findById(id);
         if (entityOptional.isPresent()) {
             DataSetEntity dataSetEntity = entityOptional.get();
-            DbInfoEntity dbInfoEntity = dataSetEntity.getDbInfo();
             SourceType sourceType = SourceType.getByType(dataSetEntity.getSourceType());
             SyncDataService syncDataService = SyncServiceBeanFactory.getInstance(sourceType);
             //执行数据同步
@@ -173,6 +281,39 @@ public class DataSetServiceImpl implements DataSetService {
             return success;
         }
         return false;
+    }
+
+    @Override
+    public Set<String> getAllTypeNames() {
+        List<DataSetEntity> list = dataSetRepository.findAll();
+        Set<String> typeNames = new HashSet<>();
+        list.forEach(dataSetEntity -> {
+            String typeName = dataSetEntity.getTypeNames();
+            if (StringUtils.hasText(typeName)) {
+                String[] typeArray = typeName.split(",");
+                typeNames.addAll(Arrays.asList(typeArray));
+            }
+        });
+        return typeNames;
+    }
+
+    @Override
+    public Set<String> getTypeNamesByIds(List<Long> ids) {
+        List<DataSetEntity> list = dataSetRepository.findAllById(ids);
+        Set<String> typeNames = new HashSet<>();
+        list.forEach(dataSetEntity -> {
+            String typeName = dataSetEntity.getTypeNames();
+            if (StringUtils.hasText(typeName)) {
+                String[] typeArray = typeName.split(",");
+                typeNames.addAll(Arrays.asList(typeArray));
+            }
+        });
+        return typeNames;
+    }
+
+    @Override
+    public DataSetEntity view(long id) {
+        return dataSetRepository.getOne(id);
     }
 
 }

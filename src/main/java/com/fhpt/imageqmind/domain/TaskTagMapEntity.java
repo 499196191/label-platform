@@ -9,14 +9,11 @@ import javax.persistence.*;
  */
 
 @Entity
-
-
 @Table(name = "task_tag_map", schema = "imageq-mind")
 public class TaskTagMapEntity {
     private int id;
-
-    private TaskInfoEntity taskInfo;
-    private TagLabelEntity tagLabel;
+    private Long taskId;
+    private Long tagId;
 
     @Id
     @Column(name = "id", nullable = false)
@@ -29,24 +26,24 @@ public class TaskTagMapEntity {
         this.id = id;
     }
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "task_id")
-    public TaskInfoEntity getTaskInfo() {
-        return taskInfo;
+    @Basic
+    @Column(name = "task_id", nullable = true)
+    public Long getTaskId() {
+        return taskId;
     }
 
-    public void setTaskInfo(TaskInfoEntity taskInfo) {
-        this.taskInfo = taskInfo;
+    public void setTaskId(Long taskId) {
+        this.taskId = taskId;
     }
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "tag_id")
-    public TagLabelEntity getTagLabel() {
-        return tagLabel;
+    @Basic
+    @Column(name = "tag_id", nullable = true)
+    public Long getTagId() {
+        return tagId;
     }
 
-    public void setTagLabel(TagLabelEntity tagLabel) {
-        this.tagLabel = tagLabel;
+    public void setTagId(Long tagId) {
+        this.tagId = tagId;
     }
 
     @Override

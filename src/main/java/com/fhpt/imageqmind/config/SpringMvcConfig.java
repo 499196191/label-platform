@@ -12,13 +12,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  */
 @Configuration
 public class SpringMvcConfig implements WebMvcConfigurer{
-    /**
-     * 全局解决跨域问题
-     */
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("*").allowedMethods("*").allowedHeaders("*");
-    }
+//    /**
+//     * 全局解决跨域问题 SpringSecurity不生效
+//     */
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        registry.addMapping("/**").allowedOrigins("*").allowedMethods("*").allowedHeaders("*");
+//    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {

@@ -36,7 +36,7 @@ public class SwaggerConfig implements WebMvcConfigurer {
         return new ApiInfoBuilder()
                 .title("ImageQMind语义建模中台接口文档")
                 .description("一款在线ImageQMind语义建模中台接口文档，通过此工具方便前端开发人员调试=.=")
-                .termsOfServiceUrl("http://10.96.9.182:8081/")
+                .termsOfServiceUrl("http://10.95.130.115:8081")
                 .contact("Marty")
                 .version("1.0")
                 .build();

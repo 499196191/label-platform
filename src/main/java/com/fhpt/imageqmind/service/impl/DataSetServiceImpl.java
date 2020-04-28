@@ -5,13 +5,13 @@ import com.fhpt.imageqmind.config.SystemProperties;
 import com.fhpt.imageqmind.constant.DeleteStatus;
 import com.fhpt.imageqmind.constant.SourceType;
 
+import com.fhpt.imageqmind.constant.TaskStatus;
 import com.fhpt.imageqmind.domain.*;
 
+import com.fhpt.imageqmind.exceptions.DataSetNameVerifyException;
 import com.fhpt.imageqmind.factory.SyncServiceBeanFactory;
 import com.fhpt.imageqmind.objects.PageInfo;
-import com.fhpt.imageqmind.objects.vo.DataSetVo;
-import com.fhpt.imageqmind.objects.vo.DbInfoVo;
-import com.fhpt.imageqmind.objects.vo.FileInfoVo;
+import com.fhpt.imageqmind.objects.vo.*;
 import com.fhpt.imageqmind.repository.DataSetRepository;
 
 
@@ -20,6 +20,7 @@ import com.fhpt.imageqmind.repository.LabelResultRepository;
 import com.fhpt.imageqmind.repository.TaskInfoRepository;
 import com.fhpt.imageqmind.service.DataSetService;
 import com.fhpt.imageqmind.service.SyncDataService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -108,7 +109,7 @@ public class DataSetServiceImpl implements DataSetService {
             dataSetVo.setId(dataSetEntity.getId());
             dataSetVo.setName(dataSetEntity.getName());
             dataSetVo.setSize(dataSetEntity.getSize());
-            dataSetVo.setDescribe(dataSetEntity.getDescription());
+            dataSetVo.setDescribe(dataSetEntity.getDescription() == null ? "" : dataSetEntity.getDescription());
             dataSetVo.setCreateTime(dataSetEntity.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             dataSetVo.setUpdateTime(dataSetEntity.getUpdateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             dataSetVo.setType(dataSetEntity.getSourceType());
@@ -128,6 +129,29 @@ public class DataSetServiceImpl implements DataSetService {
                 fileInfoVo.setPath(dataSetEntity.getFileInfo().getPath());
                 dataSetVo.setFileInfo(fileInfoVo);
             }
+            //关联任务
+            dataSetVo.setRelateTaskNum(taskInfoRepository.getCountByDataSetId(dataSetEntity.getId()));
+            List<TaskInfoVo> taskInfoVos = new ArrayList<>();
+            List<TaskInfoEntity> taskInfoEntities = taskInfoRepository.getAll(dataSetEntity.getId());
+            if (taskInfoEntities != null) {
+                taskInfoEntities.forEach(taskInfoEntity -> {
+                    TaskInfoVo taskInfoVo = new TaskInfoVo();
+                    BeanUtils.copyProperties(taskInfoEntity, taskInfoVo);
+                    taskInfoVo.setStatusName(TaskStatus.getTypeName(taskInfoEntity.getStatus()));
+                    taskInfoVo.setProcess(taskInfoEntity.getProcess().doubleValue());
+                    taskInfoVo.setCreateTime(taskInfoEntity.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    taskInfoVo.setUpdateTime(taskInfoEntity.getUpdateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                    //处理任务类型信息
+                    TaskTypeVo taskTypeVo = new TaskTypeVo();
+                    BeanUtils.copyProperties(taskInfoEntity.getTaskType(), taskTypeVo);
+                    taskInfoVo.setTaskType(taskTypeVo);
+                    taskInfoVo.setTaskTypeName(taskTypeVo.getName());
+                    //处理标签信息
+                    taskInfoVo.setTagNames(taskInfoEntity.getTagLabelEntities().stream().map(TagLabelEntity::getName).collect(Collectors.joining(",")));
+                    taskInfoVos.add(taskInfoVo);
+                });
+            }
+            dataSetVo.setTaskInfoVos(taskInfoVos);
             return dataSetVo;
         }).collect(Collectors.toList());
         result.setList(info);
@@ -189,6 +213,17 @@ public class DataSetServiceImpl implements DataSetService {
         //如果是数据库数据源或者文件数据，同步数据至本系统
         syncData(dataSetEntity.getId());
         return dataSetVo;
+    }
+
+    @Override
+    public boolean verifyName(String name) {
+        if (dataSetRepository.getCountByName(name) > 0) {
+            throw new DataSetNameVerifyException(String.format("该系统中已经有名称为'%s'的数据集", name));
+        }
+//        else if (dataSetRepository.getCountByNameDeleted(name) > 0) {
+//            throw new DataSetNameVerifyException(String.format("该系统中删除的列表已经存在名称为'%s'的数据集", name));
+//        }
+        return true;
     }
 
     /**

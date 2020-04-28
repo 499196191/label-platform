@@ -122,6 +122,8 @@ public class DataRowServiceImpl implements DataRowService {
             log.error("数据集ID{}不存在", dataSetId);
             return dataSetDetail;
         }
+        long taggedSize = labelResultRepository.getTagedSize(dataSetId);
+        dataSetDetail.setTagged(taggedSize > 0);
         DataSetEntity dataSetEntity = optionalDataSetEntity.get();
         dataSetDetail.setId(dataSetId);
         dataSetDetail.setName(dataSetEntity.getName());
@@ -138,7 +140,6 @@ public class DataRowServiceImpl implements DataRowService {
             String entityTags = "";
             if (labelResultEntities != null && labelResultEntities.size() != 0) {
                 entityTags = labelResultEntities.stream().map(LabelResultEntity::getTagLabel).distinct().map(TagLabelEntity::getName).collect(Collectors.joining(","));
-                dataSetDetail.setTagged(true);
             }
             dataRowDetail.setEntityTags(entityTags);
             //寻找分类标签
@@ -146,7 +147,6 @@ public class DataRowServiceImpl implements DataRowService {
             String classifyTags = "";
             if (classifyLabelResultEntities != null && classifyLabelResultEntities.size() != 0) {
                 classifyTags = classifyLabelResultEntities.stream().map(ClassifyLabelResultEntity::getTagLabel).distinct().map(TagLabelEntity::getName).collect(Collectors.joining(","));
-                dataSetDetail.setTagged(true);
             }
             dataRowDetail.setClassifyTags(classifyTags);
             list.add(dataRowDetail);

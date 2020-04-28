@@ -82,6 +82,7 @@ public class RuleInfoServiceImpl implements RuleInfoService {
         ruleWordRepository.saveAll(ruleWords);
     }
 
+    @Transactional(rollbackOn = Exception.class)
     @Override
     public boolean update(AddRuleVo addRuleVo) {
         Optional<RuleEntity> ruleEntityOptional = ruleRepository.findById(addRuleVo.getId());
@@ -94,7 +95,6 @@ public class RuleInfoServiceImpl implements RuleInfoService {
         ruleEntity.setResult(addRuleVo.getResult());
         ruleEntity.setTypeId(addRuleVo.getTypeId());
         Timestamp now = Timestamp.from(Instant.now());
-        ruleEntity.setCreateTime(now);
         ruleEntity.setUpdateTime(now);
         ruleEntity.setRuleTags(ruleTagRepository.findAllById(addRuleVo.getRuleTagIds()));
         ruleRepository.save(ruleEntity);
@@ -103,13 +103,21 @@ public class RuleInfoServiceImpl implements RuleInfoService {
         addRuleVo.getRuleWords().forEach(ruleWordVo -> {
             if (ruleWordVo.getId() != null) {
                 Optional<RuleWordEntity> ruleWordEntityOptional = ruleWordRepository.findById(ruleWordVo.getId());
-                ruleWordEntityOptional.ifPresent(ruleWords::add);
+                if (ruleWordEntityOptional.isPresent()) {
+                    RuleWordEntity ruleWordEntity = ruleWordEntityOptional.get();
+                    ruleWordEntity.setlWord(ruleWordVo.getLWord());
+                    ruleWordEntity.setrWord(ruleWordVo.getRWord());
+                    ruleWordEntity.setWordSpacing(ruleWordVo.getWordSpacing());
+                    ruleWordEntity.setSortNo(ruleWordVo.getSortNo());
+                    ruleWordEntity.setUpdateTime(now);
+                    ruleWords.add(ruleWordEntity);
+                }
             } else {
                 RuleWordEntity ruleWordEntity = new RuleWordEntity();
                 ruleWordEntity.setlWord(ruleWordVo.getLWord());
                 ruleWordEntity.setrWord(ruleWordVo.getRWord());
                 ruleWordEntity.setWordSpacing(ruleWordVo.getWordSpacing());
-                ruleWordEntity.setSortNo(0);
+                ruleWordEntity.setSortNo(ruleWordVo.getSortNo());
                 ruleWordEntity.setCreateTime(now);
                 ruleWordEntity.setUpdateTime(now);
                 ruleWordEntity.setRuleId(ruleEntity.getId());
@@ -120,9 +128,13 @@ public class RuleInfoServiceImpl implements RuleInfoService {
         return true;
     }
 
+    @Transactional(rollbackOn = Exception.class)
     @Override
-    public void delete(Long ruleId) {
-        ruleRepository.deleteById(ruleId);
+    public void delete(String ruleIds) {
+        if (StringUtils.hasText(ruleIds)) {
+            List<Long> ruleList = Arrays.stream(ruleIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
+            ruleList.forEach(id -> ruleRepository.deleteById(id));
+        }
     }
 
     @Override

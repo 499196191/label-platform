@@ -2,30 +2,40 @@ package com.fhpt.imageqmind.domain;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.Objects;
 
 @Entity
-@Table(name = "user", schema = "imageq-mind")
+@Table(name = "user", schema = "imageq-mind", catalog = "")
 public class UserEntity {
-    private long id;
+    private int id;
+    private String userCode;
     private String userName;
-    private Long orgId;
-    private Long roleId;
-    private String passwd;
-    private String jobName;
+    private Integer groupId;
+    private Integer roleId;
+    private String password;
     private String email;
-    private String phone;
     private Integer status;
     private Timestamp createTime;
     private Timestamp updateTime;
 
     @Id
     @Column(name = "id")
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
+    }
+
+    @Basic
+    @Column(name = "user_code")
+    public String getUserCode() {
+        return userCode;
+    }
+
+    public void setUserCode(String userCode) {
+        this.userCode = userCode;
     }
 
     @Basic
@@ -39,43 +49,33 @@ public class UserEntity {
     }
 
     @Basic
-    @Column(name = "org_id")
-    public Long getOrgId() {
-        return orgId;
+    @Column(name = "group_id")
+    public Integer getGroupId() {
+        return groupId;
     }
 
-    public void setOrgId(Long orgId) {
-        this.orgId = orgId;
+    public void setGroupId(Integer groupId) {
+        this.groupId = groupId;
     }
 
     @Basic
     @Column(name = "role_id")
-    public Long getRoleId() {
+    public Integer getRoleId() {
         return roleId;
     }
 
-    public void setRoleId(Long roleId) {
+    public void setRoleId(Integer roleId) {
         this.roleId = roleId;
     }
 
     @Basic
-    @Column(name = "passwd")
-    public String getPasswd() {
-        return passwd;
+    @Column(name = "password")
+    public String getPassword() {
+        return password;
     }
 
-    public void setPasswd(String passwd) {
-        this.passwd = passwd;
-    }
-
-    @Basic
-    @Column(name = "job_name")
-    public String getJobName() {
-        return jobName;
-    }
-
-    public void setJobName(String jobName) {
-        this.jobName = jobName;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Basic
@@ -86,16 +86,6 @@ public class UserEntity {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    @Basic
-    @Column(name = "phone")
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     @Basic
@@ -126,5 +116,27 @@ public class UserEntity {
 
     public void setUpdateTime(Timestamp updateTime) {
         this.updateTime = updateTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserEntity that = (UserEntity) o;
+        return id == that.id &&
+                Objects.equals(userCode, that.userCode) &&
+                Objects.equals(userName, that.userName) &&
+                Objects.equals(groupId, that.groupId) &&
+                Objects.equals(roleId, that.roleId) &&
+                Objects.equals(password, that.password) &&
+                Objects.equals(email, that.email) &&
+                Objects.equals(status, that.status) &&
+                Objects.equals(createTime, that.createTime) &&
+                Objects.equals(updateTime, that.updateTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, userCode, userName, groupId, roleId, password, email, status, createTime, updateTime);
     }
 }

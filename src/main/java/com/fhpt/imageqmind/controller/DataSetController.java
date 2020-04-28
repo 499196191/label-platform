@@ -1,49 +1,43 @@
 package com.fhpt.imageqmind.controller;
 
 import com.fhpt.imageqmind.annotation.EagleEye;
-
+import com.fhpt.imageqmind.constant.method.Add;
+import com.fhpt.imageqmind.exceptions.DataSetNameVerifyException;
 import com.fhpt.imageqmind.objects.PageInfo;
 import com.fhpt.imageqmind.objects.Result;
 import com.fhpt.imageqmind.objects.vo.DataSetVo;
-
 import com.fhpt.imageqmind.objects.vo.ExcelInfo;
 import com.fhpt.imageqmind.service.DataSetService;
-
-
 import com.fhpt.imageqmind.utils.ExcelUtil;
 import com.fhpt.imageqmind.utils.MinioUtil;
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.util.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-
 import org.springframework.web.multipart.MultipartFile;
 
-
-
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 import java.io.IOException;
-
-
-
+import java.io.InputStream;
 import java.util.ArrayList;
-
 import java.util.Arrays;
-
 import java.util.List;
 import java.util.Set;
-
-
 import java.util.stream.Collectors;
-
 
 /**
  * 数据集相关接口
  * @author Marty
  */
+@Slf4j
 @Api(value = "数据集相关接口", description = "基于数据集的操作")
 @ApiSort(1)
+@Validated
 @RestController
 @RequestMapping("/dataSet")
 public class DataSetController {
@@ -77,7 +71,7 @@ public class DataSetController {
     @ApiOperation(value = "新增数据集", notes = "用户可以通过此接口新增单个的数据集，注意：数据集的数据源可能有oracle、excel、csv几种格式")
     @ApiOperationSort(1)
     @PostMapping("/add")
-    public Result<DataSetVo> add(@RequestBody DataSetVo dataSet) {
+    public Result<DataSetVo> add(@RequestBody @Validated(Add.class) DataSetVo dataSet) {
         Result<DataSetVo> result = new Result<>();
         result.data = dataSetService.insert(dataSet);
         if (result.data.getId() != 0) {
@@ -86,6 +80,24 @@ public class DataSetController {
         } else {
             result.code = -1;
             result.msg = "新增失败";
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "验证数据集名称是否重复", notes = "表单验证时调用此接口")
+    @GetMapping("/verifyName")
+    public Result<Boolean> verifyName(@RequestParam("name") @NotBlank(message = "名称不能为空") String name){
+        Result<Boolean> result = new Result<>();
+        try {
+            if (dataSetService.verifyName(name)) {
+                result.code = 0;
+                result.data = true;
+                result.msg = "该名称可以使用";
+            }
+        } catch (DataSetNameVerifyException e) {
+            result.code = 0;
+            result.data = false;
+            result.msg = e.getMessage();
         }
         return result;
     }
@@ -219,6 +231,27 @@ public class DataSetController {
         return result;
     }
 
+    @ApiOperation(value = "下载示例Excel文件接口")
+    @GetMapping("/sampleExcel/download")
+    public void downloadExcel(HttpServletResponse response){
+        // 导出的EXCEL文件名
+        String exportFileName = "示例.xlsx";
+        response.setContentType("octets/stream");
+        try {
+            response.setHeader("Content-Disposition", "attachment;filename=\"" + new String(exportFileName.getBytes("UTF-8"), "iso8859-1") + "\"");
+            ServletOutputStream servletOutputStream = response.getOutputStream();
+            InputStream inputStream = DataSetController.class.getClassLoader().getResourceAsStream("files/sample.xlsx");
+            int len = -1;
+            byte[] bytes = new byte[1024];
+            while ((len = inputStream.read(bytes)) != -1) {
+                servletOutputStream.write(bytes, 0, len);
+            }
+            inputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("示例文件导出失败！");
+        }
+    }
 
 
 }

@@ -1,5 +1,6 @@
 package com.fhpt.imageqmind.controller;
 
+import com.fhpt.imageqmind.exceptions.TaskNameVerifyException;
 import com.fhpt.imageqmind.objects.PageInfo;
 import com.fhpt.imageqmind.objects.Result;
 import com.fhpt.imageqmind.objects.vo.AddTaskVo;
@@ -33,6 +34,24 @@ public class TaskInfoController {
         result.code = 0;
         result.data = taskInfoService.detail(taskId);
         result.msg = "查询成功！";
+        return result;
+    }
+
+    @ApiOperation(value = "验证标注任务名称是否重复", notes = "表单验证时调用此接口")
+    @GetMapping("/verifyName")
+    public Result<Boolean> verifyName(@RequestParam("name") String name) {
+        Result<Boolean> result = new Result<>();
+        try {
+            if (taskInfoService.verifyName(name)) {
+                result.code = 0;
+                result.data = true;
+                result.msg = "该名称可以使用";
+            }
+        } catch (TaskNameVerifyException e) {
+            result.code = 0;
+            result.data = false;
+            result.msg = e.getMessage();
+        }
         return result;
     }
 

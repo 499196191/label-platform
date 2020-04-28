@@ -1,5 +1,6 @@
 package com.fhpt.imageqmind.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.druid.support.json.JSONUtils;
@@ -91,9 +92,11 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
         List<LabelResultEntity> labelResultEntityList = labelResultRepository.getAll(addTrainingVo.getTaskIds(), addTrainingVo.getTagIds());
         //生成文件内容
         StringBuilder stringBuilder = generateFileString(labelResultEntityList);
+        String datetime =DateUtil.format(new Date(),"YYYYMMDDHHmmss");
+        String lastDir="/zhangsan/"+datetime;
         String dataSetFile = systemProperties.getDataSetDir() + "/taskId" + trainingInfoEntity.getId() + ".dev";
         trainingInfoEntity.setDataSetDir(dataSetFile);
-        String modelDir = systemProperties.getModelDir() + "/taskId" + trainingInfoEntity.getId();
+        String modelDir = systemProperties.getModelDir() + lastDir;
         trainingInfoEntity.setModelDir(modelDir);
         //写入文件
         fileWrite(stringBuilder.toString(), dataSetFile);
@@ -142,9 +145,11 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
         List<LabelResultEntity> labelResultEntityList = labelResultRepository.getAll(addTrainingVo.getTaskIds(), addTrainingVo.getTagIds());
         //生成文件内容
         StringBuilder stringBuilder = generateFileString(labelResultEntityList);
+        String datetime =DateUtil.format(new Date(),"YYYYMMDDHHmmss");
+        String lastDir="/zhangsan/"+datetime;
         String dataSetFile = systemProperties.getDataSetDir() + "/taskId" + trainingInfoEntity.getId() + ".dev";
         trainingInfoEntity.setDataSetDir(dataSetFile);
-        String modelDir = systemProperties.getModelDir() + "/taskId" + trainingInfoEntity.getId();
+        String modelDir = systemProperties.getModelDir() + lastDir;
         trainingInfoEntity.setModelDir(modelDir);
         //写入文件
         fileWrite(stringBuilder.toString(), dataSetFile);
@@ -299,14 +304,16 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
             trainingInfoVo.setTestPercent(trainingInfoEntity.getTestPercent().doubleValue());
             trainingInfoVo.setLearningRate(trainingInfoEntity.getLearningRate().doubleValue());
             trainingInfoVo.setCreateTime(trainingInfoEntity.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            if (trainingInfoEntity.getTrainingStatus() == TrainingStatus.FINISHED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.FAILED.getType()) {
+            if (trainingInfoEntity.getTrainingStatus() == TrainingStatus.FINISHED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.FAILED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.STOPPED.getType()) {
                 Duration duration = Duration.between(trainingInfoEntity.getCreateTime().toLocalDateTime(), trainingInfoEntity.getFinishTime().toLocalDateTime());
-                trainingInfoVo.setCostTime(duration.toMinutes());
+                String constTime = String.format("%d小时%d分钟%d秒", duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
+                trainingInfoVo.setCostTime(constTime);
             } else if (trainingInfoEntity.getTrainingStatus() == TrainingStatus.NOT_START.getType()) {
-                trainingInfoVo.setCostTime(0L);
+                trainingInfoVo.setCostTime("");
             } else {
                 Duration duration = Duration.between(trainingInfoEntity.getCreateTime().toLocalDateTime(), LocalDateTime.now());
-                trainingInfoVo.setCostTime(duration.toMinutes());
+                String constTime = String.format("%d小时%d分钟%d秒", duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
+                trainingInfoVo.setCostTime(constTime);
             }
             trainingInfoVos.add(trainingInfoVo);
         });
@@ -359,12 +366,14 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
             trainingDetailVo.setTestPercent(trainingInfoEntity.getTestPercent().doubleValue());
             trainingDetailVo.setValidatePercent(trainingInfoEntity.getValidatePercent().doubleValue());
             trainingDetailVo.setCreateTime(trainingInfoEntity.getCreateTime().toLocalDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            if (trainingInfoEntity.getTrainingStatus() == TrainingStatus.FINISHED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.FAILED.getType()) {
+            if (trainingInfoEntity.getTrainingStatus() == TrainingStatus.FINISHED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.FAILED.getType() || trainingInfoEntity.getTrainingStatus() == TrainingStatus.STOPPED.getType()) {
                 Duration duration = Duration.between(trainingInfoEntity.getCreateTime().toLocalDateTime(), trainingInfoEntity.getFinishTime().toLocalDateTime());
-                trainingDetailVo.setCostTime(duration.toMinutes());
+                String constTime = String.format("%d小时%d分钟%d秒", duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
+                trainingDetailVo.setCostTime(constTime);
             } else {
                 Duration duration = Duration.between(trainingInfoEntity.getCreateTime().toLocalDateTime(), LocalDateTime.now());
-                trainingDetailVo.setCostTime(duration.toMinutes());
+                String constTime = String.format("%d小时%d分钟%d秒", duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
+                trainingDetailVo.setCostTime(constTime);
             }
             if (trainingInfoEntity.getTrainingResult() != null) {
                 JSONObject resultObj = JSONObject.parseObject(trainingInfoEntity.getTrainingResult());
@@ -408,7 +417,24 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
                 trainingDetailVo.setAllTaskSize(trainingDetailVo.getAllTaskSize() + taskInfoEntity.getSize());
             });
             trainingDetailVo.setTaskInfoVos(taskInfoVos);
-
+            //处理标记任务信息
+            List<SampleDataVo> sampleDataVos = new ArrayList<>();
+            //1.查找标签所有类别
+            List<Long> taskIds = trainingInfoEntity.getTaskInfo().stream().map(TaskInfoEntity::getId).collect(Collectors.toList());
+            List<TagLabelEntity> tagLabelEntities = trainingInfoEntity.getTagLabels();
+            //2.分别查找标签下对应的标注信息
+            for (TagLabelEntity tagLabelEntity : tagLabelEntities) {
+                SampleDataVo sampleDataVo = new SampleDataVo();
+                sampleDataVo.setTagName(tagLabelEntity.getName());
+                long size =taskIds.size()==0?0: labelResultRepository.getCountByTagIdAndTaskIds(taskIds, tagLabelEntity.getId());
+                BigDecimal allSize = new BigDecimal(size);
+                sampleDataVo.setTotalNum(allSize.intValue());
+                sampleDataVo.setTrainNum(trainingInfoEntity.getTrainingPercent().multiply(allSize).intValue());
+                sampleDataVo.setDevNum(trainingInfoEntity.getValidatePercent().multiply(allSize).intValue());
+                sampleDataVo.setTestNum(trainingInfoEntity.getTestPercent().multiply(allSize).intValue());
+                sampleDataVos.add(sampleDataVo);
+            }
+            trainingDetailVo.setSampleDataVos(sampleDataVos);
             //处理标记任务信息
             if (trainingInfoEntity.getTrainingResult() != null) {
                 List<SampleDataVo> sampleDataVoList = new ArrayList<>();
@@ -468,6 +494,8 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
             e.printStackTrace();
             return false;
         }
+        Timestamp now = Timestamp.from(Instant.now());
+        trainingInfoEntity.setFinishTime(now);
         trainingInfoRepository.save(trainingInfoEntity);
         return true;
     }
@@ -507,6 +535,8 @@ public class TrainingInfoServiceImpl implements TrainingInfoService {
             e.printStackTrace();
             return false;
         }
+        Timestamp now = Timestamp.from(Instant.now());
+        trainingInfoEntity.setCreateTime(now);
         trainingInfoRepository.save(trainingInfoEntity);
         return true;
     }

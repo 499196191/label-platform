@@ -49,4 +49,15 @@ public interface LabelResultRepository extends JpaRepository<LabelResultEntity, 
 
     @Query("select l from LabelResultEntity l where l.dataRow.id = :dataRowId")
     List<LabelResultEntity> getAllByRowId(@Param("dataRowId") long dataRowId);
+
+    @Modifying
+    @Transactional(rollbackOn = Exception.class)
+    @Query("delete from LabelResultEntity l where l.tagLabel.id = :tagId")
+    void deleteByTagId(@Param("tagId") long tagId);
+
+    @Query("select count(l.id) from LabelResultEntity l where l.dataRow.id in (select d.id from DataRowEntity d where d.dataSet.id = :datasetId)")
+    long getTagedSize(@Param("datasetId") Long datasetId);
+
+    @Query("select count(l.id) from LabelResultEntity l where l.taskInfo.id in :taskIds and l.tagLabel.id = :tagId")
+    long getCountByTagIdAndTaskIds(@Param("taskIds")List<Long> taskIds, @Param("tagId")Long tagId);
 }

@@ -16,7 +16,7 @@ public interface RuleInfoService {
 
     boolean update(AddRuleVo addRuleVo);
 
-    void delete(Long ruleId);
+    void delete(String ruleIds);
 
     PageInfo<RuleInfoVo> query(String ruleTagIds, int typeId, String name, Integer page, Integer pageSize);
 

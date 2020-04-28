@@ -44,5 +44,5 @@ public class TrainingInfoVo {
     @ApiModelProperty(value = "训练UUID")
     private String taskId;
     @ApiModelProperty(value = "已训练时长(分钟)")
-    private Long costTime;
+    private String costTime;
 }

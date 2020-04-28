@@ -48,15 +48,13 @@ public class LoginServiceImpl implements LoginService {
     }
 
     @Override
-    public void login(Long userId) {
-        HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
-        request.getSession().setAttribute(USER_ID, userId);
+    public void login(int userId) {
+
     }
 
     @Override
-    public void logout(Long userId) {
-        HttpServletRequest request = ((ServletRequestAttributes) (RequestContextHolder.currentRequestAttributes())).getRequest();
-        request.getSession().removeAttribute(USER_ID);
+    public void logout(int userId) {
+
     }
 
 }

@@ -14,6 +14,8 @@ public interface RuleTagService {
 
     void add(String name);
 
+    boolean verifyName(String name);
+
     boolean update(Long id, String name);
 
     boolean delete(Long id);

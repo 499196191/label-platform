@@ -14,6 +14,8 @@ public interface TaskInfoService {
 
     TaskInfoVo detail(Long taskId);
 
+    boolean verifyName(String name);
+
     PageInfo<TaskInfoVo> query(Integer page, Integer pageSize, Long typeId, Integer status, String tag, String name, boolean sizeIsNotZero);
 
     long add(AddTaskVo addTaskVo);

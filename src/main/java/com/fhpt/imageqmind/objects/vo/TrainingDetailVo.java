@@ -55,7 +55,7 @@ public class TrainingDetailVo {
     @ApiModelProperty(value = "完成时间")
     private String finishTime;
     @ApiModelProperty(value = "已训练时长(分钟)")
-    private Long costTime;
+    private String costTime;
     @ApiModelProperty(value = "训练任务UUID")
     private String taskId;
     @ApiModelProperty(value = "标注结果集")

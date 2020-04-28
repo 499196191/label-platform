@@ -96,7 +96,7 @@ public class RuleEntity {
         this.createdBy = createdBy;
     }
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST})
     @JoinTable(name = "rule_tag_map",
             joinColumns = {@JoinColumn(name = "rule_id", referencedColumnName = "id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})

@@ -19,4 +19,6 @@ public class TagLabelCount {
     private long typeTagCount;
     @ApiModelProperty(value = "关系标签总数")
     private long relationTagCount;
+    @ApiModelProperty(value = "回收站标签总数")
+    private long recyclerTagCount;
 }

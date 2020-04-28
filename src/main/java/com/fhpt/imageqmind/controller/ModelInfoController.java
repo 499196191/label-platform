@@ -8,6 +8,7 @@ import com.fhpt.imageqmind.service.DataSetService;
 import com.fhpt.imageqmind.service.ModelInfoService;
 import com.fhpt.imageqmind.service.TrainingInfoService;
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.Map;
 @Api(value = "模型管理相关接口",  description = "模型管理相关接口")
 @RestController
 @RequestMapping("/modelInfo")
+@Slf4j
 public class ModelInfoController {
 
     @Autowired
@@ -194,12 +196,14 @@ public class ModelInfoController {
         if(1==modelInfoEntity.getSourceType()){
             TrainingDetailVo trainingDetailVo= trainingInfoService.get(modelInfoVo.getTrainingId());
             List<TrainingTag> tagList =trainingDetailVo.getTrainingTags();
-            StringBuffer sb=new StringBuffer();
-            tagList.forEach(tag ->{
-                sb.append(tag.getTagName()).append(",");
+            if(tagList!=null){
+                StringBuffer sb=new StringBuffer();
+                tagList.forEach(tag ->{
+                    sb.append(tag.getTagName()).append(",");
 
-            });
-            trainingDetailVo.setTrainingTagNames(sb.toString());
+                });
+                trainingDetailVo.setTrainingTagNames(sb.toString());
+            }
             map.put("trainingDetailVo",trainingDetailVo);
         }else{
             map.put("trainingDetailVo",null);

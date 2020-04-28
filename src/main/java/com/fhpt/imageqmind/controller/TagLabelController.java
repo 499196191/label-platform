@@ -2,7 +2,9 @@ package com.fhpt.imageqmind.controller;
 
 import com.fhpt.imageqmind.annotation.EagleEye;
 
-import com.fhpt.imageqmind.exceptions.VerifyException;
+import com.fhpt.imageqmind.constant.method.Add;
+import com.fhpt.imageqmind.constant.method.Update;
+import com.fhpt.imageqmind.exceptions.TagNameVerifyException;
 import com.fhpt.imageqmind.objects.PageInfo;
 
 import com.fhpt.imageqmind.objects.Result;
@@ -17,6 +19,7 @@ import io.swagger.annotations.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
  */
 @Api(value = "标签相关接口", description = "基于标签的操作")
 @ApiSort(5)
+@Validated
 @RestController
 @RequestMapping("/tagLabel")
 public class TagLabelController {
@@ -44,7 +48,7 @@ public class TagLabelController {
     @ApiOperation(value = "新增标签", notes = "用户可以通过此接口新增单个标签")
     @ApiOperationSort(1)
     @PostMapping("/add")
-    public Result<TagLabelVo> add(@RequestBody TagLabelVo tagLabel) {
+    public Result<TagLabelVo> add(@RequestBody @Validated(Add.class) TagLabelVo tagLabel) {
         Result<TagLabelVo> result = new Result<>();
         if (!tagLabelService.isValid(tagLabel.getName(), tagLabel.getEnglishName())) {
             result.code = -1;
@@ -77,7 +81,7 @@ public class TagLabelController {
             result.data = tagLabelService.verify(type, name, isChinese);
             result.msg = "验证成功";
             result.code = 0;
-        } catch (VerifyException e) {
+        } catch (TagNameVerifyException e) {
             result.msg = e.getMessage();
             result.data = false;
             result.code = 0;
@@ -106,29 +110,32 @@ public class TagLabelController {
     @EagleEye
     @ApiImplicitParams({
             @ApiImplicitParam(name = "type", value = "类型", dataType = "integer", paramType = "query"),
+            @ApiImplicitParam(name = "isDelete", value = "是否是回收站内容", dataType = "boolean", paramType = "query"),
             @ApiImplicitParam(name = "page", value = "页码", dataType = "integer", paramType = "query"),
             @ApiImplicitParam(name = "pageSize", value = "页大小", dataType = "integer", paramType = "query")
     })
     public Result<PageInfo<TagLabelVo>> query(@RequestParam(value = "type", defaultValue = "-1", required = false) Integer type,
+                                              @RequestParam(value = "name", defaultValue = "", required = false) String name,
+                                              @RequestParam(value = "isDelete", defaultValue = "false", required = false) boolean isDelete,
                                               @RequestParam(value = "page", defaultValue = "1", required = false) Integer page,
                                               @RequestParam(value = "pageSize", defaultValue = "10", required = false) Integer pageSize){
         Result<PageInfo<TagLabelVo>> result = new Result<>();
-        result.data = tagLabelService.query(type, page, pageSize);
+        result.data = tagLabelService.query(type, name, page, pageSize, isDelete);
         result.code = 0;
         result.msg = "查询成功";
         return result;
     }
 
-    @ApiOperation(value = "标签删除")
+    @ApiOperation(value = "标签删除(伪删除：放入回收站)")
     @ApiOperationSort(4)
     @GetMapping("/delete")
-    public Result delete(@RequestParam(value = "id") String ids){
+    public Result delete(@RequestParam(value = "id") String ids) {
         Result result = new Result<>();
         try {
-            if(tagLabelService.delete(ids)){
+            if (tagLabelService.delete(ids)) {
                 result.code = 0;
                 result.msg = "删除成功";
-            }else{
+            } else {
                 result.code = -1;
                 result.msg = "删除失败：传递的[ids]参数为空";
             }
@@ -140,10 +147,50 @@ public class TagLabelController {
         return result;
     }
 
+    @ApiOperation(value = "标签还原")
+    @GetMapping("/restore")
+    public Result restore(@RequestParam(value = "id") Long id) {
+        Result result = new Result<>();
+        try {
+            if (tagLabelService.restore(id)) {
+                result.code = 0;
+                result.msg = "还原成功";
+            } else {
+                result.code = -1;
+                result.msg = "还原失败：传递的[id]参数为空";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.code = -1;
+            result.msg = "还原失败：数据库异常";
+        }
+        return result;
+    }
+
+    @ApiOperation(value = "标签彻底删除(真删除：相关的标注信息也都删除)")
+    @GetMapping("/delete/force")
+    public Result deleteForce(@RequestParam(value = "id") String ids) {
+        Result result = new Result<>();
+        try {
+            if (tagLabelService.deleteForce(ids)) {
+                result.code = 0;
+                result.msg = "彻底删除成功";
+            } else {
+                result.code = -1;
+                result.msg = "彻底删除失败：传递的[ids]参数为空";
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.code = -1;
+            result.msg = "彻底删除失败：数据库异常";
+        }
+        return result;
+    }
+
     @ApiOperation(value = "更新标签", notes = "用户可以通过此接口修改单个标签")
     @ApiOperationSort(5)
     @PostMapping("/update")
-    public Result<TagLabelVo> update(@RequestBody TagLabelVo tagLabel) {
+    public Result<TagLabelVo> update(@RequestBody @Validated(Update.class) TagLabelVo tagLabel) {
         Result<TagLabelVo> result = new Result<>();
         if (tagLabelService.update(tagLabel)) {
             result.code = 0;

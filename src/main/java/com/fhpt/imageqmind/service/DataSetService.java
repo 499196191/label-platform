@@ -21,6 +21,8 @@ public interface DataSetService {
      */
     DataSetVo insert(DataSetVo dataSetVo);
 
+    boolean verifyName(String name);
+
     /**
      * 更新
      */

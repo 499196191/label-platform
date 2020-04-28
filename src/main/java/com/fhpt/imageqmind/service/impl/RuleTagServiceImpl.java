@@ -1,5 +1,6 @@
 package com.fhpt.imageqmind.service.impl;
 
+import com.fhpt.imageqmind.domain.RuleEntity;
 import com.fhpt.imageqmind.domain.RuleTagEntity;
 
 import com.fhpt.imageqmind.objects.vo.RuleTagVo;
@@ -19,6 +20,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 规则详情业务
@@ -43,6 +45,11 @@ public class RuleTagServiceImpl implements RuleTagService {
         ruleTagRepository.save(ruleTagEntity);
     }
 
+    @Override
+    public boolean verifyName(String name) {
+        return ruleTagRepository.getCountByTagName(name) == 0;
+    }
+
     @Transactional(rollbackOn = Exception.class)
     @Override
     public boolean update(Long id, String name) {
@@ -62,6 +69,23 @@ public class RuleTagServiceImpl implements RuleTagService {
     public boolean delete(Long id) {
         Optional<RuleTagEntity> ruleTagEntityOptional = ruleTagRepository.findById(id);
         if (ruleTagEntityOptional.isPresent()) {
+            //删除关联的规则标签信息
+            List<RuleEntity> rules = ruleRepository.getAllByTagId(id);
+            if (rules != null) {
+                for (RuleEntity ruleEntity : rules) {
+                    //只有一个标签直接删除
+                    List<RuleTagEntity> ruleTagEntities = ruleEntity.getRuleTags();
+                    if (ruleTagEntities != null) {
+                        if (ruleTagEntities.size() == 1) {
+                            ruleRepository.deleteById(ruleEntity.getId());
+                        } else {
+                            List<RuleTagEntity> filteredRuleTags = ruleTagEntities.stream().filter(ruleTagEntity -> ruleTagEntity.getId() != id).collect(Collectors.toList());
+                            ruleEntity.setRuleTags(filteredRuleTags);
+                            ruleRepository.save(ruleEntity);
+                        }
+                    }
+                }
+            }
             ruleTagRepository.delete(ruleTagEntityOptional.get());
             return true;
         } else {

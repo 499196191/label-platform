@@ -47,7 +47,9 @@ import javax.annotation.Resource;
 import java.io.*;
 
 
-
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RunWith(SpringRunner.class)
@@ -63,6 +65,7 @@ public class Test {
     @Autowired
     private TrainingInfoRepository trainingInfoRepository;
     @Autowired
+
     private TagLabelRepository tagLabelRepository;
     @Autowired
     private SystemProperties systemProperties;
@@ -325,6 +328,16 @@ public class Test {
             } while (result.isTruncated());
         } catch (Exception e) {
         }
+    }
+
+    @org.junit.Test
+    public void testDate(){
+        LocalDateTime localDateTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String res = localDateTime.format(dateTimeFormatter);
+        System.out.println(res);
+        System.out.println(NumberFormat.getCurrencyInstance(Locale.CHINA).format(100));
+
     }
 
 

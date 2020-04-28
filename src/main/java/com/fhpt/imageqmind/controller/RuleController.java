@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,14 +46,30 @@ public class RuleController {
     public Result addTag(String name) {
         Result result = new Result<>();
         try {
-            ruleTagService.add(name);
-            result.code = 0;
-            result.msg = "新增成功";
+            if (StringUtils.isEmpty(name)) {
+                result.code = -1;
+                result.msg = "新增失败：标签名称不能为空！";
+            } else {
+                ruleTagService.add(name);
+                result.code = 0;
+                result.msg = "新增成功";
+            }
         } catch (Exception e) {
             e.printStackTrace();
             result.code = -1;
             result.msg = "新增失败";
         }
+        return result;
+    }
+
+    @ApiOperation(value = "验证标签是否重名")
+    @ApiImplicitParams({@ApiImplicitParam(name = "name", value = "标签名", dataType = "string", paramType = "query")})
+    @GetMapping("/tag/verify")
+    public Result<Boolean> verifyName(@RequestParam("name") String name) {
+        Result<Boolean> result = new Result<>();
+        result.code = 1;
+        result.data = ruleTagService.verifyName(name);
+        result.msg = "查询完成";
         return result;
     }
 
@@ -134,12 +151,12 @@ public class RuleController {
     }
 
     @ApiOperation(value = "删除规则")
-    @ApiImplicitParams({@ApiImplicitParam(name = "ruleId", value = "规则ID", dataType = "Long", paramType = "form")})
+    @ApiImplicitParams({@ApiImplicitParam(name = "ruleIds", value = "多个规则ID", dataType = "String", paramType = "form")})
     @PostMapping("/delete")
-    public Result delete(Long ruleId){
+    public Result delete(String ruleIds){
         Result result = new Result<>();
         try {
-            ruleInfoService.delete(ruleId);
+            ruleInfoService.delete(ruleIds);
             result.code = 0;
             result.msg = "删除成功";
         } catch (Exception e) {

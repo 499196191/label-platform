@@ -1,13 +1,15 @@
 package com.fhpt.imageqmind.config;
 
 import com.fhpt.imageqmind.filters.LabelFilter;
+import com.github.xiaoymin.swaggerbootstrapui.filter.ProductionSecurityFilter;
+import com.github.xiaoymin.swaggerbootstrapui.filter.SecurityBasicAuthFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 
 
-
+import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -46,5 +48,19 @@ public class SpringBeanConfig {
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
+
+    @Bean
+    public FilterRegistrationBean filterRegistrationBean() {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+        filterRegistrationBean.setFilter(new ProductionSecurityFilter(false));
+        filterRegistrationBean.addUrlPatterns("/*");
+        filterRegistrationBean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        return filterRegistrationBean;
+    }
+
+//    @Bean
+//    public MethodValidationPostProcessor methodValidationPostProcessor() {
+//        return new MethodValidationPostProcessor();
+//    }
 
 }

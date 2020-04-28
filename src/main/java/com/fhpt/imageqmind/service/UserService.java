@@ -8,11 +8,11 @@ import com.fhpt.imageqmind.objects.Result;
  */
 public interface UserService {
 
-    Result<UserEntity> login(String userName, String password);
+    Result<UserEntity> login(String userCode, String password);
 
-    int insert(String userName, String password);
+    int insert(String userCode,String userName, String password);
 
-    boolean update(String userName, String password);
+    boolean update(String userCode,String userName, String password);
 
     UserEntity getById(Long userId);
 }

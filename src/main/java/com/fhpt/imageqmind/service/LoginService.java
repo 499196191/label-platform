@@ -14,7 +14,7 @@ public interface LoginService {
 
     boolean isLogin();
 
-    void login(Long userId);
+    void login(int userId);
 
-    void logout(Long userId);
+    void logout(int userId);
 }

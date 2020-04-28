@@ -5,22 +5,21 @@ import java.sql.Timestamp;
 import java.util.Objects;
 
 @Entity
-@Table(name = "priv", schema = "imageq-mind")
+@Table(name = "priv", schema = "imageq-mind", catalog = "")
 public class PrivEntity {
-    private long id;
+    private int id;
     private String privName;
     private String privDesc;
-    private Integer status;
     private Timestamp createTime;
     private Timestamp updateTime;
 
     @Id
     @Column(name = "id")
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -45,16 +44,6 @@ public class PrivEntity {
     }
 
     @Basic
-    @Column(name = "status")
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    @Basic
     @Column(name = "create_time")
     public Timestamp getCreateTime() {
         return createTime;
@@ -74,4 +63,20 @@ public class PrivEntity {
         this.updateTime = updateTime;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PrivEntity that = (PrivEntity) o;
+        return id == that.id &&
+                Objects.equals(privName, that.privName) &&
+                Objects.equals(privDesc, that.privDesc) &&
+                Objects.equals(createTime, that.createTime) &&
+                Objects.equals(updateTime, that.updateTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, privName, privDesc, createTime, updateTime);
+    }
 }

@@ -206,8 +206,13 @@ public class ModelInfoServiceImpl implements ModelInfoService {
             if(StringUtils.hasText(brief)){
                 modelInfoEntity.setBrief(brief);
             }
-
+            //已发布回退到已部署状态不调用接口
             if(deployStatus!=null){
+                if(modelInfoEntity.getDeployStatus()==2){
+                    modelInfoEntity.setDeployStatus(deployStatus);
+                    modelInfoRepository.save(modelInfoEntity);
+                    return true;
+                }
                 modelInfoEntity.setDeployStatus(deployStatus);
                 if(1==modelInfoEntity.getSourceType()&&deployStatus==1){
                     flag=callApi(modelInfoEntity);

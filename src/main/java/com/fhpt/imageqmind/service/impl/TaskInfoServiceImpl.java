@@ -4,6 +4,8 @@ import com.fhpt.imageqmind.constant.DeleteStatus;
 import com.fhpt.imageqmind.constant.RowStatus;
 import com.fhpt.imageqmind.constant.TaskStatus;
 import com.fhpt.imageqmind.domain.*;
+import com.fhpt.imageqmind.exceptions.TagNameVerifyException;
+import com.fhpt.imageqmind.exceptions.TaskNameVerifyException;
 import com.fhpt.imageqmind.objects.PageInfo;
 import com.fhpt.imageqmind.objects.vo.*;
 import com.fhpt.imageqmind.repository.*;
@@ -121,6 +123,14 @@ public class TaskInfoServiceImpl implements TaskInfoService {
             return taskInfoVo;
         }
         return null;
+    }
+
+    @Override
+    public boolean verifyName(String name) {
+        if(taskInfoRepository.getCountByName(name)>0){
+            throw new TaskNameVerifyException(String.format("该标注任务名称'%s'在系统中已经重名", name));
+        }
+        return true;
     }
 
     @Override
